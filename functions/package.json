@@ -5,12 +5,12 @@
     "lint": "eslint .",
     "serve": "firebase serve --only functions",
     "shell": "firebase functions:shell",
-    "start": "nodemon npm run shell",
+    "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "8"
+    "node": "10"
   },
   "dependencies": {
     "firebase-admin": "^8.0.0",
