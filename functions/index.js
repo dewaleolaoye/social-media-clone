@@ -10,11 +10,15 @@ app.get('/screams', (req, res) => {
   admin
     .firestore()
     .collection('screams')
+    .orderBy('createdAt', 'desc')
     .get()
     .then(data => {
       const screams = [];
       data.forEach(doc => {
-        screams.push(doc.data());
+        screams.push({
+          screamsId: doc.id,
+          ...doc.data()
+        });
       });
 
       return res.status(200).json(screams);
@@ -24,12 +28,12 @@ app.get('/screams', (req, res) => {
     });
 });
 
-app.post('/createScream', (req, res) => {
-  // const { body, userHandle } = req.body;
+app.post('/scream', (req, res) => {
+  const { body, userHandle } = req.body;
   const newScream = {
-    body: req.body.body,
-    userHandle: req.body.userHandle,
-    createdAt: admin.firestore.Timestamp.fromDate(new Date())
+    body,
+    userHandle,
+    createdAt: new Date().toISOString()
   };
 
   admin
@@ -49,8 +53,5 @@ app.post('/createScream', (req, res) => {
       console.log('the error is here', error);
     });
 });
-
-// exports.createScream = functions.https.onRequest((req, res) => {
-// });
 
 exports.api = functions.https.onRequest(app);
