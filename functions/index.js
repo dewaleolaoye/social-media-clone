@@ -66,21 +66,38 @@ app.post('/signup', (req, res) => {
     userHandle
   };
 
-  firebase
-    .auth()
-    .createUserWithEmailAndPassword(newUser.email, newUser.password)
-    .then(data => {
-      return res.status(201).json({
-        status: 'success',
-        message: `User ${data.user.uid} successfully signed up`
-      });
-    })
-    .catch(error => {
-      console.log(error);
-      return res.status(500).json({
-        status: 'error',
-        message: `${error.message}`
-      });
+  db.doc(`/users/${userHandle}`)
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'User handle already exist'
+        });
+      }
+
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(newUser.email, newUser.password)
+        .then(data => {
+          // console.log(data.user);
+          return data.user.getIdToken();
+        })
+        .then(token => {
+          return res.status(201).json({ token });
+        })
+        .catch(error => {
+          if ((error.code = 'auth/email-already-in-use')) {
+            return res.status(401).json({
+              status: 'error',
+              message: `Email already exist`
+            });
+          }
+          return res.status(500).json({
+            status: 'error',
+            message: error.code
+          });
+        });
     });
 });
 
