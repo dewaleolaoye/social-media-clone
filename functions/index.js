@@ -1,15 +1,18 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const express = require('express');
+const firebase = require('firebase');
 
 const app = express();
 
 admin.initializeApp();
+const db = admin.firestore();
+
+const { firebaseConfig } = require('./config');
+firebase.initializeApp(firebaseConfig);
 
 app.get('/screams', (req, res) => {
-  admin
-    .firestore()
-    .collection('screams')
+  db.collection('screams')
     .orderBy('createdAt', 'desc')
     .get()
     .then(data => {
@@ -36,9 +39,7 @@ app.post('/scream', (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  admin
-    .firestore()
-    .collection('screams')
+  db.collection('screams')
     .add(newScream)
     .then(doc => {
       return res.status(201).json({
@@ -51,6 +52,35 @@ app.post('/scream', (req, res) => {
         error: 'something went wrong'
       });
       console.log('the error is here', error);
+    });
+});
+
+// Signup
+
+app.post('/signup', (req, res) => {
+  const { email, password, confirmPassword, userHandle } = req.body;
+  const newUser = {
+    email,
+    password,
+    confirmPassword,
+    userHandle
+  };
+
+  firebase
+    .auth()
+    .createUserWithEmailAndPassword(newUser.email, newUser.password)
+    .then(data => {
+      return res.status(201).json({
+        status: 'success',
+        message: `User ${data.user.uid} successfully signed up`
+      });
+    })
+    .catch(error => {
+      console.log(error);
+      return res.status(500).json({
+        status: 'error',
+        message: `${error.message}`
+      });
     });
 });
 
