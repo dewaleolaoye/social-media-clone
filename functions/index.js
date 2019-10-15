@@ -71,6 +71,7 @@ const isEmpty = string => {
 };
 
 // Signup
+let errors = {};
 app.post('/signup', (req, res) => {
   const { email, password, confirmPassword, userHandle } = req.body;
   const newUser = {
@@ -86,7 +87,6 @@ app.post('/signup', (req, res) => {
    ** REPETITION OF CODE
    */
   // Validations
-  let errors = {};
 
   if (isEmpty(email)) {
     errors.email = 'Must not be empty';
@@ -152,6 +152,38 @@ app.post('/signup', (req, res) => {
             message: error.code
           });
         });
+    });
+});
+
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  if (isEmpty(email)) errors.email = 'Must not be empty';
+  if (isEmpty(password)) errors.password = 'Must not be empty';
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json(errors);
+  }
+
+  firebase
+    .auth()
+    .signInWithEmailAndPassword(email, password)
+    .then(data => {
+      return data.user.getIdToken();
+    })
+    .then(token => {
+      return res.json({
+        message: 'Sign in successfully',
+        token
+      });
+    })
+    .catch(err => {
+      if ((err.code = 'auth/wrong-password')) {
+        return res.status(403).json({
+          message: 'Wrong credentials'
+        });
+      }
+      return res.status(500).json({
+        message: err.code
+      });
     });
 });
 
