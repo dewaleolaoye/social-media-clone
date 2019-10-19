@@ -4,8 +4,13 @@ const firebase = require('firebase');
 const config = require('../util/config');
 firebase.initializeApp(config);
 
-const { validateSignUpData, validateLoginData } = require('../util/validators');
+const {
+  validateSignUpData,
+  validateLoginData,
+  reduceUserDetails
+} = require('../util/validators');
 
+// Signup
 exports.signUp = (req, res) => {
   const { email, password, confirmPassword, userHandle } = req.body;
 
@@ -75,6 +80,7 @@ exports.signUp = (req, res) => {
     });
 };
 
+// login
 exports.login = (req, res) => {
   const { email, password } = req.body;
   const user = {
@@ -112,6 +118,7 @@ exports.login = (req, res) => {
     });
 };
 
+// upload users profile image
 exports.uploadImage = (req, res) => {
   const BusBoy = require('busboy');
   const path = require('path');
@@ -124,7 +131,7 @@ exports.uploadImage = (req, res) => {
   let imageFileName;
 
   busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
-    console.log(fieldname, file, filename, encoding, mimetype);
+    // console.log(fieldname, file, filename, encoding, mimetype);
     if (mimetype !== 'image/jpeg' && mimetype !== 'image/png') {
       return res.status(400).json({ error: 'Wrong file type submitted' });
     }
@@ -138,6 +145,7 @@ exports.uploadImage = (req, res) => {
     imageToBeUploaded = { filepath, mimetype };
     file.pipe(fs.createWriteStream(filepath));
   });
+
   busboy.on('finish', () => {
     admin
       .storage()
@@ -163,4 +171,25 @@ exports.uploadImage = (req, res) => {
       });
   });
   busboy.end(req.rawBody);
+};
+
+// add user details
+exports.addUserDetails = (req, res) => {
+  let userDetails = reduceUserDetails(req.body);
+
+  db.doc(`/users/${req.user.userHandle}`)
+    .update(userDetails)
+    .then(() => {
+      return res
+        .status(200)
+        .json({
+          message: 'Details added successfully'
+        })
+        .catch(err => {
+          console.log('the error is here', err);
+          return res.status(500).json({
+            error: err.code
+          });
+        });
+    });
 };

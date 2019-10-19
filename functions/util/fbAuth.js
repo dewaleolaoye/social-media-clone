@@ -18,7 +18,7 @@ module.exports = (req, res, next) => {
     .auth()
     .verifyIdToken(idToken)
     .then(decodedToken => {
-      console.log(decodedToken);
+      // console.log(decodedToken);
       req.user = decodedToken;
 
       return db
